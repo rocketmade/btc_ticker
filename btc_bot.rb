@@ -2,6 +2,8 @@ require 'rubygems'
 require 'httparty'
 require 'timers'
 
+$stdout.sync = true
+
 class BTCNotifier
 
   attr_accessor :hipchat_api, :last_price, :current_price, :avg_price, :timer, :timing_interval
@@ -20,9 +22,17 @@ class BTCNotifier
   def send_notification
     return unless get_prices!
 
+    body = {message: price_message, color: color}
+
     response = HTTParty.post hipchat_api,
-      body:    {message: price_message, color: color}.to_json,
+      body:    body.to_json,
       headers: { 'content-type' => 'application/json' }
+
+    if response.code == 204
+      puts "Posted #{body} to hipchat"
+    else
+      puts "Error posting to hipchat: #{response.code} #{response.body}"
+    end
   end
 
 private
